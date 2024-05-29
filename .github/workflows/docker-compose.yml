@@ -1,0 +1,50 @@
+# https://github.com/gristlabs/grist-core#using-grist
+
+services:
+  grist:
+    image: gristlabs/grist:latest
+    container_name: grist-test
+    environment:
+      - 'APP_HOME_URL=https://${SUB_DOMAIN}.${TOP_DOMAIN}'
+      - GRIST_DOMAIN=${SUB_DOMAIN}.${TOP_DOMAIN}
+      - GRIST_SINGLE_ORG=${ORG}
+      - GRIST_HIDE_UI_ELEMENTS=billing
+      - GRIST_ORG_IN_PATH=false
+      - GRIST_SESSION_SECRET=${SESSION_SECRET}
+      - GRIST_SANDBOX_FLAVOR=gvisor
+      - GRIST_FORCE_LOGIN=true
+      - PORT=8080
+      - DEBUG=0
+      - GRIST_DEFAULT_EMAIL=${ADMIN_EMAIL}
+      
+      # Database
+      - TYPEORM_TYPE=postgres
+      - TYPEORM_DATABASE=grist
+      - TYPEORM_USERNAME=grist
+      - TYPEORM_PASSWORD=${DB_PASS}
+      - TYPEORM_HOST=database
+      - TYPEORM_LOGGING=false
+      - TYPEORM_PORT=5432
+    
+    env_file:
+      - .env
+    volumes:
+      - ${VOL_PERSIST}:/persist
+      - ${VOL_CERTS}:/sso
+    depends_on:
+      - database
+    ports:
+      - ${APP_PORT}:8080
+
+  database:
+    image: postgres:15-alpine
+    container_name: grist-test-db
+    environment:
+      - POSTGRES_DB=grist
+      - POSTGRES_USER=grist
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - DEBUG=0
+    env_file:
+      - .env
+    volumes:
+      - ${VOL_DB}:/var/lib/postgresql/data
